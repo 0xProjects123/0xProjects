@@ -1,11 +1,91 @@
-<!-- 0xProjects/docs/index.html -->
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>0xProjects</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>0xProjects | Backyardigans</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <h1>Bienvenidos a 0xProjects</h1>
-  <p>¡Esta es una prueba desde GitHub Pages!</p>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col items-center">
+
+  <header class="w-full p-6 bg-gray-800 shadow-md">
+    <h1 class="text-2xl font-semibold text-center">Los Backyardigans están leyendo tu comentario.</h1>
+  </header>
+
+  <main class="w-full max-w-4xl mt-8 px-4 space-y-6 flex flex-col items-center">
+    <!-- Formulario de comentarios con imagen -->
+    <section class="bg-gray-800 rounded-2xl p-6 shadow-md w-full flex flex-col md:flex-row gap-6 items-start">
+      <!-- Imagen -->
+      <img src="https://m.media-amazon.com/images/S/pv-target-images/6b02fea9ac43358cad762d6d089a3684dc62bee64c72c5f99c5a690e99b5bb89._SX1080_FMjpg_.jpg"
+        alt="Backyardigans" class="w-32 h-auto rounded-lg shadow-lg" />
+
+      <!-- Formulario -->
+      <div class="flex-1">
+        <h2 class="text-xl font-semibold mb-4">Deja un comentario</h2>
+        <textarea id="commentInput" rows="4" class="w-full p-3 rounded-lg bg-gray-700 text-white resize-none focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Escribe tu comentario anónimo aquí..."></textarea>
+        <button onclick="submitComment()" class="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition">Enviar</button>
+      </div>
+    </section>
+
+    <!-- Lista de comentarios -->
+    <section class="bg-gray-800 rounded-2xl p-6 shadow-md w-full">
+      <h2 class="text-xl font-semibold mb-4">Comentarios</h2>
+      <ul id="commentList" class="space-y-4"></ul>
+    </section>
+  </main>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB4BiAjpsTUgntb0F7vcSEGwhJvhLFwxsQ",
+      authDomain: "xprojects-c8ecb.firebaseapp.com",
+      projectId: "xprojects-c8ecb",
+      storageBucket: "xprojects-c8ecb.appspot.com",
+      messagingSenderId: "28051514021",
+      appId: "1:28051514021:web:27af9723e8abebd38ca34c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function submitComment() {
+      const input = document.getElementById("commentInput");
+      const text = input.value.trim();
+      if (text) {
+        await addDoc(collection(db, "comentarios"), { texto: text, timestamp: Date.now() });
+        input.value = "";
+        loadComments();
+      }
+    }
+
+    async function deleteComment(id) {
+      await deleteDoc(doc(db, "comentarios", id));
+      loadComments();
+    }
+
+    async function loadComments() {
+      const list = document.getElementById("commentList");
+      list.innerHTML = "";
+      const snapshot = await getDocs(collection(db, "comentarios"));
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const li = document.createElement("li");
+        li.className = "bg-gray-700 p-4 rounded-xl relative shadow-sm";
+        li.innerHTML = `
+          <p class="text-sm">${data.texto}</p>
+          <button onclick="deleteComment('${docSnap.id}')" class="absolute top-2 right-2 text-sm text-red-400 hover:text-red-600">Eliminar</button>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    window.submitComment = submitComment;
+    window.deleteComment = deleteComment;
+
+    loadComments();
+  </script>
 </body>
 </html>
