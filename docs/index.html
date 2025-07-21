@@ -1,116 +1,91 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Comentarios anónimos - 0xProjects</title>
-  <script type="module">
-    // Importar Firebase desde CDN
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>0xProjects | Backyardigans</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col items-center">
 
-    // ✅ Configuración de tu proyecto Firebase (ya completada con tus datos)
+  <header class="w-full p-6 bg-gray-800 shadow-md">
+    <h1 class="text-2xl font-semibold text-center">Los Backyardigans están leyendo tu comentario.</h1>
+  </header>
+
+  <main class="w-full max-w-4xl mt-8 px-4 space-y-6 flex flex-col items-center">
+    <!-- Formulario de comentarios con imagen -->
+    <section class="bg-gray-800 rounded-2xl p-6 shadow-md w-full flex flex-col md:flex-row gap-6 items-start">
+      <!-- Imagen -->
+      <img src="https://m.media-amazon.com/images/S/pv-target-images/6b02fea9ac43358cad762d6d089a3684dc62bee64c72c5f99c5a690e99b5bb89._SX1080_FMjpg_.jpg"
+        alt="Backyardigans" class="w-32 h-auto rounded-lg shadow-lg" />
+
+      <!-- Formulario -->
+      <div class="flex-1">
+        <h2 class="text-xl font-semibold mb-4">Deja un comentario</h2>
+        <textarea id="commentInput" rows="4" class="w-full p-3 rounded-lg bg-gray-700 text-white resize-none focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Escribe tu comentario anónimo aquí..."></textarea>
+        <button onclick="submitComment()" class="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition">Enviar</button>
+      </div>
+    </section>
+
+    <!-- Lista de comentarios -->
+    <section class="bg-gray-800 rounded-2xl p-6 shadow-md w-full">
+      <h2 class="text-xl font-semibold mb-4">Comentarios</h2>
+      <ul id="commentList" class="space-y-4"></ul>
+    </section>
+  </main>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyB4BiAjpsTUgntb0F7vcSEGwhJvhLFwxsQ",
       authDomain: "xprojects-c8ecb.firebaseapp.com",
       projectId: "xprojects-c8ecb",
-      storageBucket: "xprojects-c8ecb.firebasestorage.app",
+      storageBucket: "xprojects-c8ecb.appspot.com",
       messagingSenderId: "28051514021",
       appId: "1:28051514021:web:27af9723e8abebd38ca34c"
     };
 
-    // Inicializar Firebase y Firestore
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Función para agregar comentario
-    async function enviarComentario() {
-      const texto = document.getElementById("comentario").value.trim();
-      if (!texto) return alert("Escribe un comentario antes de enviar.");
-
-      try {
-        await addDoc(collection(db, "comentarios"), {
-          texto,
-          fecha: new Date()
-        });
-        document.getElementById("comentario").value = "";
-      } catch (e) {
-        console.error("Error al enviar comentario:", e);
+    async function submitComment() {
+      const input = document.getElementById("commentInput");
+      const text = input.value.trim();
+      if (text) {
+        await addDoc(collection(db, "comentarios"), { texto: text, timestamp: Date.now() });
+        input.value = "";
+        loadComments();
       }
     }
 
-    // Función para mostrar comentarios en tiempo real
-    function cargarComentarios() {
-      const contenedor = document.getElementById("lista-comentarios");
-      onSnapshot(collection(db, "comentarios"), (snapshot) => {
-        contenedor.innerHTML = "";
-        snapshot.forEach((docu) => {
-          const data = docu.data();
-          const div = document.createElement("div");
-          div.className = "comentario";
-          div.innerHTML = `
-            <p>${data.texto}</p>
-            <small>${new Date(data.fecha?.toDate?.() || data.fecha).toLocaleString()}</small>
-            <button onclick="eliminarComentario('${docu.id}')">Eliminar</button>
-          `;
-          contenedor.appendChild(div);
-        });
+    async function deleteComment(id) {
+      await deleteDoc(doc(db, "comentarios", id));
+      loadComments();
+    }
+
+    async function loadComments() {
+      const list = document.getElementById("commentList");
+      list.innerHTML = "";
+      const snapshot = await getDocs(collection(db, "comentarios"));
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const li = document.createElement("li");
+        li.className = "bg-gray-700 p-4 rounded-xl relative shadow-sm";
+        li.innerHTML = `
+          <p class="text-sm">${data.texto}</p>
+          <button onclick="deleteComment('${docSnap.id}')" class="absolute top-2 right-2 text-sm text-red-400 hover:text-red-600">Eliminar</button>
+        `;
+        list.appendChild(li);
       });
     }
 
-    // Eliminar comentario
-    window.eliminarComentario = async function (id) {
-      if (confirm("¿Eliminar este comentario?")) {
-        await deleteDoc(doc(db, "comentarios", id));
-      }
-    }
+    window.submitComment = submitComment;
+    window.deleteComment = deleteComment;
 
-    // Esperar que cargue el DOM
-    window.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("enviar").addEventListener("click", enviarComentario);
-      cargarComentarios();
-    });
+    loadComments();
   </script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 2rem;
-      background: #f0f4f8;
-      color: #333;
-    }
-    h1 {
-      color: #2b7a78;
-    }
-    textarea {
-      width: 100%;
-      height: 80px;
-      margin-bottom: 1rem;
-    }
-    button {
-      background: #3aafa9;
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-    }
-    .comentario {
-      background: #fff;
-      border: 1px solid #ddd;
-      margin-top: 1rem;
-      padding: 1rem;
-      border-radius: 8px;
-    }
-    .comentario small {
-      display: block;
-      margin-top: 0.5rem;
-      color: gray;
-    }
-  </style>
-</head>
-<body>
-  <h1>💬 Comentarios anónimos</h1>
-  <textarea id="comentario" placeholder="Escribe tu comentario..."></textarea><br>
-  <button id="enviar">Enviar comentario</button>
-  <div id="lista-comentarios"></div>
 </body>
 </html>
