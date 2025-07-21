@@ -1,11 +1,116 @@
-<!-- 0xProjects/docs/index.html -->
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>0xProjects</title>
+  <meta charset="UTF-8">
+  <title>Comentarios anónimos - 0xProjects</title>
+  <script type="module">
+    // Importar Firebase desde CDN
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // ✅ Configuración de tu proyecto Firebase (ya completada con tus datos)
+    const firebaseConfig = {
+      apiKey: "AIzaSyB4BiAjpsTUgntb0F7vcSEGwhJvhLFwxsQ",
+      authDomain: "xprojects-c8ecb.firebaseapp.com",
+      projectId: "xprojects-c8ecb",
+      storageBucket: "xprojects-c8ecb.firebasestorage.app",
+      messagingSenderId: "28051514021",
+      appId: "1:28051514021:web:27af9723e8abebd38ca34c"
+    };
+
+    // Inicializar Firebase y Firestore
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Función para agregar comentario
+    async function enviarComentario() {
+      const texto = document.getElementById("comentario").value.trim();
+      if (!texto) return alert("Escribe un comentario antes de enviar.");
+
+      try {
+        await addDoc(collection(db, "comentarios"), {
+          texto,
+          fecha: new Date()
+        });
+        document.getElementById("comentario").value = "";
+      } catch (e) {
+        console.error("Error al enviar comentario:", e);
+      }
+    }
+
+    // Función para mostrar comentarios en tiempo real
+    function cargarComentarios() {
+      const contenedor = document.getElementById("lista-comentarios");
+      onSnapshot(collection(db, "comentarios"), (snapshot) => {
+        contenedor.innerHTML = "";
+        snapshot.forEach((docu) => {
+          const data = docu.data();
+          const div = document.createElement("div");
+          div.className = "comentario";
+          div.innerHTML = `
+            <p>${data.texto}</p>
+            <small>${new Date(data.fecha?.toDate?.() || data.fecha).toLocaleString()}</small>
+            <button onclick="eliminarComentario('${docu.id}')">Eliminar</button>
+          `;
+          contenedor.appendChild(div);
+        });
+      });
+    }
+
+    // Eliminar comentario
+    window.eliminarComentario = async function (id) {
+      if (confirm("¿Eliminar este comentario?")) {
+        await deleteDoc(doc(db, "comentarios", id));
+      }
+    }
+
+    // Esperar que cargue el DOM
+    window.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("enviar").addEventListener("click", enviarComentario);
+      cargarComentarios();
+    });
+  </script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background: #f0f4f8;
+      color: #333;
+    }
+    h1 {
+      color: #2b7a78;
+    }
+    textarea {
+      width: 100%;
+      height: 80px;
+      margin-bottom: 1rem;
+    }
+    button {
+      background: #3aafa9;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+    .comentario {
+      background: #fff;
+      border: 1px solid #ddd;
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+    }
+    .comentario small {
+      display: block;
+      margin-top: 0.5rem;
+      color: gray;
+    }
+  </style>
 </head>
 <body>
-  <h1>Bienvenidos a 0xProjects</h1>
-  <p>¡Esta es una prueba desde GitHub Pages!</p>
+  <h1>💬 Comentarios anónimos</h1>
+  <textarea id="comentario" placeholder="Escribe tu comentario..."></textarea><br>
+  <button id="enviar">Enviar comentario</button>
+  <div id="lista-comentarios"></div>
 </body>
 </html>
