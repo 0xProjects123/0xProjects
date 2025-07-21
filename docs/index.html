@@ -2,90 +2,215 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>0xProjects | Backyardigans</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=3.0"/>
+  <title>Los Backyardigans están leyendo tu comentario.</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d1117;
+      color: #c9d1d9;
+    }
+    header {
+      background-color: #161b22;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    header .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    header img.logo {
+      height: 60px;
+      border-radius: 8px;
+    }
+    h1 {
+      font-size: 1.2rem;
+      color: #58a6ff;
+      margin: 0;
+    }
+    main {
+      padding: 2rem;
+    }
+    .carpeta {
+      background-color: #21262d;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    .carpeta h2 {
+      color: #58a6ff;
+    }
+    .carpeta p {
+      color: #8b949e;
+    }
+    input, button {
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      border: none;
+      border-radius: 4px;
+    }
+    input {
+      background-color: #0d1117;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+    }
+    button {
+      background-color: #238636;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2ea043;
+    }
+    .chat {
+      margin-top: 1rem;
+    }
+    .mensaje {
+      background-color: #30363d;
+      padding: 0.5rem;
+      border-radius: 4px;
+      margin: 0.5rem 0;
+    }
+    .search-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      background-color: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 25px;
+      padding: 0.3rem 0.8rem;
+      display: flex;
+      align-items: center;
+      z-index: 999;
+    }
+    .search-container input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #c9d1d9;
+      padding: 0.3rem;
+    }
+    .search-container svg {
+      width: 18px;
+      height: 18px;
+      fill: #58a6ff;
+      margin-left: 0.4rem;
+    }
+  </style>
 </head>
-<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col items-center">
+<body>
+  <!-- Buscador flotante -->
+  <div class="search-container">
+    <input type="text" placeholder="Buscar carpeta..." id="searchInput" onkeyup="filtrarCarpetas()" />
+    <svg viewBox="0 0 24 24">
+      <path d="M10 2a8 8 0 015.29 13.71l4.58 4.58-1.42 1.42-4.58-4.58A8 8 0 1110 2zm0 2a6 6 0 100 12 6 6 0 000-12z"/>
+    </svg>
+  </div>
 
-  <header class="w-full p-6 bg-gray-800 shadow-md">
-    <h1 class="text-2xl font-semibold text-center">Los Backyardigans están leyendo tu comentario.</h1>
+  <header>
+    <div class="header-left">
+      <img src="https://m.media-amazon.com/images/S/pv-target-images/6b02fea9ac43358cad762d6d089a3684dc62bee64c72c5f99c5a690e99b5bb89._SX1080_FMjpg_.jpg" alt="Logo Backyardigans" class="logo">
+      <h1>Los Backyardigans están leyendo tu comentario.</h1>
+    </div>
   </header>
 
-  <main class="w-full max-w-4xl mt-8 px-4 space-y-6 flex flex-col items-center">
-    <!-- Formulario de comentarios con imagen -->
-    <section class="bg-gray-800 rounded-2xl p-6 shadow-md w-full flex flex-col md:flex-row gap-6 items-start">
-      <!-- Imagen -->
-      <img src="https://m.media-amazon.com/images/S/pv-target-images/6b02fea9ac43358cad762d6d089a3684dc62bee64c72c5f99c5a690e99b5bb89._SX1080_FMjpg_.jpg"
-        alt="Backyardigans" class="w-32 h-auto rounded-lg shadow-lg" />
-
-      <!-- Formulario -->
-      <div class="flex-1">
-        <h2 class="text-xl font-semibold mb-4">Deja un comentario</h2>
-        <textarea id="commentInput" rows="4" class="w-full p-3 rounded-lg bg-gray-700 text-white resize-none focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Escribe tu comentario anónimo aquí..."></textarea>
-        <button onclick="submitComment()" class="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition">Enviar</button>
-      </div>
+  <main>
+    <section>
+      <h2>Crear nueva carpeta</h2>
+      <input type="text" id="carpetaNombre" placeholder="Nombre de la carpeta" />
+      <input type="password" id="carpetaClave" placeholder="Contraseña" />
+      <button onclick="crearCarpeta()">Crear Carpeta</button>
     </section>
 
-    <!-- Lista de comentarios -->
-    <section class="bg-gray-800 rounded-2xl p-6 shadow-md w-full">
-      <h2 class="text-xl font-semibold mb-4">Comentarios</h2>
-      <ul id="commentList" class="space-y-4"></ul>
-    </section>
+    <section id="carpetas"></section>
   </main>
 
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  <script>
+    const carpetas = {};
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyB4BiAjpsTUgntb0F7vcSEGwhJvhLFwxsQ",
-      authDomain: "xprojects-c8ecb.firebaseapp.com",
-      projectId: "xprojects-c8ecb",
-      storageBucket: "xprojects-c8ecb.appspot.com",
-      messagingSenderId: "28051514021",
-      appId: "1:28051514021:web:27af9723e8abebd38ca34c"
-    };
+    function crearCarpeta() {
+      const nombre = document.getElementById('carpetaNombre').value.trim();
+      const clave = document.getElementById('carpetaClave').value.trim();
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    async function submitComment() {
-      const input = document.getElementById("commentInput");
-      const text = input.value.trim();
-      if (text) {
-        await addDoc(collection(db, "comentarios"), { texto: text, timestamp: Date.now() });
-        input.value = "";
-        loadComments();
+      if (!nombre || !clave) {
+        alert("Por favor, completa todos los campos.");
+        return;
       }
+
+      const nombreKey = nombre.toLowerCase();
+
+      if (carpetas[nombreKey]) {
+        alert("Ya existe una carpeta con ese nombre.");
+        return;
+      }
+
+      carpetas[nombreKey] = { nombreOriginal: nombre, clave, mensajes: [] };
+      mostrarCarpetas();
     }
 
-    async function deleteComment(id) {
-      await deleteDoc(doc(db, "comentarios", id));
-      loadComments();
-    }
+    function mostrarCarpetas() {
+      const contenedor = document.getElementById('carpetas');
+      contenedor.innerHTML = '';
 
-    async function loadComments() {
-      const list = document.getElementById("commentList");
-      list.innerHTML = "";
-      const snapshot = await getDocs(collection(db, "comentarios"));
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        const li = document.createElement("li");
-        li.className = "bg-gray-700 p-4 rounded-xl relative shadow-sm";
-        li.innerHTML = `
-          <p class="text-sm">${data.texto}</p>
-          <button onclick="deleteComment('${docSnap.id}')" class="absolute top-2 right-2 text-sm text-red-400 hover:text-red-600">Eliminar</button>
+      Object.keys(carpetas).forEach(key => {
+        const nombreOriginal = carpetas[key].nombreOriginal;
+        const div = document.createElement('div');
+        div.className = 'carpeta carpeta-item';
+        div.dataset.nombre = key;
+        div.innerHTML = `
+          <h2>${nombreOriginal}</h2>
+          <input type="password" placeholder="Contraseña" id="pass-${key}" />
+          <button onclick="entrarCarpeta('${key}')">Entrar</button>
+          <div class="chat" id="chat-${key}" style="display:none;">
+            <input type="text" placeholder="Escribe un mensaje..." id="msg-${key}" />
+            <button onclick="enviarMensaje('${key}')">Enviar</button>
+            <div id="mensajes-${key}"></div>
+          </div>
         `;
-        list.appendChild(li);
+        contenedor.appendChild(div);
       });
     }
 
-    window.submitComment = submitComment;
-    window.deleteComment = deleteComment;
+    function entrarCarpeta(key) {
+      const inputClave = document.getElementById(`pass-${key}`);
+      const chat = document.getElementById(`chat-${key}`);
+      if (inputClave.value === carpetas[key].clave) {
+        chat.style.display = 'block';
+        inputClave.value = '';
+      } else {
+        alert('Contraseña incorrecta');
+      }
+    }
 
-    loadComments();
+    function enviarMensaje(key) {
+      const input = document.getElementById(`msg-${key}`);
+      const texto = input.value.trim();
+      if (!texto) return;
+
+      carpetas[key].mensajes.push(texto);
+      input.value = '';
+
+      const mensajesDiv = document.getElementById(`mensajes-${key}`);
+      mensajesDiv.innerHTML += `<div class="mensaje">${texto}</div>`;
+    }
+
+    function filtrarCarpetas() {
+      const filtro = document.getElementById('searchInput').value.toLowerCase();
+      const items = document.querySelectorAll('.carpeta-item');
+
+      items.forEach(item => {
+        const nombre = item.dataset.nombre;
+        item.style.display = nombre.includes(filtro) ? 'block' : 'none';
+      });
+    }
   </script>
 </body>
+</html>
+
 </html>
