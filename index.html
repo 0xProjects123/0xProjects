@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=3.0"/>
   <title>Los Backyardigans están leyendo tu comentario.</title>
   <style>
     body {
@@ -104,6 +104,34 @@
     }
   </style>
 </head>
+<!-- Firebase App (core SDK) -->
+<script type="module">
+  // Importar directamente desde un CDN
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  // Tu configuración personalizada (¡la que Firebase te mostró!)
+  const firebaseConfig = {
+    apiKey: "AIzaSyB4BiAjpsTUgntb0F7vcSEGwhJvhLFwxsQ",
+    authDomain: "xprojects-c8ecb.firebaseapp.com",
+    projectId: "xprojects-c8ecb",
+    storageBucket: "xprojects-c8ecb.firebasestorage.app",
+    messagingSenderId: "28051514021",
+    appId: "1:28051514021:web:c5e7afb5c362953e8ca34c"
+  };
+
+  // Inicializa Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // Puedes usar "db" para guardar, leer, eliminar datos, etc.
+  window.firebaseDB = db;
+  window.firebaseRef = ref;
+  window.firebasePush = push;
+  window.firebaseOnValue = onValue;
+  window.firebaseRemove = remove;
+</script>
+
 <body>
   <div class="search-container">
     <input type="text" placeholder="Buscar carpeta..." id="searchInput" onkeyup="filtrarCarpetas()" />
