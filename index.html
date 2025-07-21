@@ -159,111 +159,145 @@
   </main>
 
   <script>
-    const carpetas = {};
+<script>
+  const db = window.firebaseDB;
+  const ref = window.firebaseRef;
+  const push = window.firebasePush;
+  const onValue = window.firebaseOnValue;
+  const remove = window.firebaseRemove;
 
-    function guardarEnLocalStorage() {
-      localStorage.setItem('carpetas', JSON.stringify(carpetas));
+  const carpetas = {};
+
+  function crearCarpeta() {
+    const nombre = document.getElementById('carpetaNombre').value.trim();
+    const clave = document.getElementById('carpetaClave').value.trim();
+
+    if (!nombre || !clave) {
+      alert("Por favor, completa todos los campos.");
+      return;
     }
 
-    function cargarDesdeLocalStorage() {
-      const datos = localStorage.getItem('carpetas');
-      if (datos) {
-        Object.assign(carpetas, JSON.parse(datos));
-        mostrarCarpetas();
-      }
+    if (/[^a-zA-Z0-9-_ ]/.test(nombre)) {
+      alert("El nombre solo puede contener letras, números, espacios, guiones o guiones bajos.");
+      return;
     }
 
-    function crearCarpeta() {
-      const nombre = document.getElementById('carpetaNombre').value.trim();
-      const clave = document.getElementById('carpetaClave').value.trim();
+    const nombreKey = nombre.toLowerCase();
 
-      if (!nombre || !clave) {
-        alert("Por favor, completa todos los campos.");
-        return;
-      }
-
-      if (/[^a-zA-Z0-9-_ ]/.test(nombre)) {
-        alert("El nombre solo puede contener letras, números, espacios, guiones o guiones bajos.");
-        return;
-      }
-
-      const nombreKey = nombre.toLowerCase();
-
-      if (carpetas[nombreKey]) {
-        alert("Ya existe una carpeta con ese nombre.");
-        return;
-      }
-
-      carpetas[nombreKey] = { nombreOriginal: nombre, clave, mensajes: [] };
-      guardarEnLocalStorage();
-      mostrarCarpetas();
+    if (carpetas[nombreKey]) {
+      alert("Ya existe una carpeta con ese nombre.");
+      return;
     }
 
-    function mostrarCarpetas() {
-      const contenedor = document.getElementById('carpetas');
-      contenedor.innerHTML = '';
+    const carpeta = {
+      nombreOriginal: nombre,
+      clave,
+      mensajes: []
+    };
 
+    // Guardar en Firebase
+    push(ref(db, 'carpetas'), {
+      key: nombreKey,
+      ...carpeta
+    });
+
+    document.getElementById('carpetaNombre').value = '';
+    document.getElementById('carpetaClave').value = '';
+  }
+
+  function mostrarCarpetas() {
+    const contenedor = document.getElementById('carpetas');
+    contenedor.innerHTML = '';
+
+    Object.keys(carpetas).forEach(key => {
+      const carpeta = carpetas[key];
+      const div = document.createElement('div');
+      div.className = 'carpeta carpeta-item';
+      div.dataset.nombre = key;
+      div.innerHTML = `
+        <h2>${carpeta.nombreOriginal}</h2>
+        <input type="password" placeholder="Contraseña" id="pass-${key}" />
+        <button onclick="entrarCarpeta('${key}')">Entrar</button>
+        <div class="chat" id="chat-${key}" style="display:none;">
+          <input type="text" placeholder="Escribe un mensaje..." id="msg-${key}" />
+          <button onclick="enviarMensaje('${key}')">Enviar</button>
+          <div id="mensajes-${key}"></div>
+        </div>
+      `;
+      contenedor.appendChild(div);
+    });
+  }
+
+  function entrarCarpeta(key) {
+    const inputClave = document.getElementById(`pass-${key}`);
+    const chat = document.getElementById(`chat-${key}`);
+    const mensajesDiv = document.getElementById(`mensajes-${key}`);
+
+    if (inputClave.value === carpetas[key].clave) {
+      chat.style.display = 'block';
+      mensajesDiv.innerHTML = carpetas[key].mensajes.map(
+        m => `<div class="mensaje">${m}</div>`
+      ).join('');
+      inputClave.value = '';
+    } else {
+      alert('Contraseña incorrecta');
+    }
+  }
+
+  function enviarMensaje(key) {
+    const input = document.getElementById(`msg-${key}`);
+    const texto = input.value.trim();
+    if (!texto) return;
+
+    carpetas[key].mensajes.push(texto);
+    input.value = '';
+
+    const mensajesDiv = document.getElementById(`mensajes-${key}`);
+    mensajesDiv.innerHTML += `<div class="mensaje">${texto}</div>`;
+
+    // Guardar mensaje en Firebase
+    push(ref(db, `carpetasMensajes/${key}`), texto);
+  }
+
+  function filtrarCarpetas() {
+    const filtro = document.getElementById('searchInput').value.toLowerCase();
+    const items = document.querySelectorAll('.carpeta-item');
+
+    items.forEach(item => {
+      const nombre = item.dataset.nombre;
+      item.style.display = nombre.includes(filtro) ? 'block' : 'none';
+    });
+  }
+
+  // 🔁 Cargar carpetas desde Firebase
+  function cargarDesdeFirebase() {
+    onValue(ref(db, 'carpetas'), snapshot => {
+      carpetas = {}; // Resetear
+      snapshot.forEach(child => {
+        const data = child.val();
+        carpetas[data.key] = {
+          nombreOriginal: data.nombreOriginal,
+          clave: data.clave,
+          mensajes: []
+        };
+      });
+
+      // Cargar mensajes por carpeta
       Object.keys(carpetas).forEach(key => {
-        const carpeta = carpetas[key];
-        const div = document.createElement('div');
-        div.className = 'carpeta carpeta-item';
-        div.dataset.nombre = key;
-        div.innerHTML = `
-          <h2>${carpeta.nombreOriginal}</h2>
-          <input type="password" placeholder="Contraseña" id="pass-${key}" />
-          <button onclick="entrarCarpeta('${key}')">Entrar</button>
-          <div class="chat" id="chat-${key}" style="display:none;">
-            <input type="text" placeholder="Escribe un mensaje..." id="msg-${key}" />
-            <button onclick="enviarMensaje('${key}')">Enviar</button>
-            <div id="mensajes-${key}"></div>
-          </div>
-        `;
-        contenedor.appendChild(div);
+        onValue(ref(db, `carpetasMensajes/${key}`), snap => {
+          const msgs = [];
+          snap.forEach(msgSnap => msgs.push(msgSnap.val()));
+          carpetas[key].mensajes = msgs;
+          mostrarCarpetas();
+        });
       });
-    }
+    });
+  }
 
-    function entrarCarpeta(key) {
-      const inputClave = document.getElementById(`pass-${key}`);
-      const chat = document.getElementById(`chat-${key}`);
-      const mensajesDiv = document.getElementById(`mensajes-${key}`);
+  // Cargar al iniciar
+  window.addEventListener("DOMContentLoaded", cargarDesdeFirebase);
+</script>
 
-      if (inputClave.value === carpetas[key].clave) {
-        chat.style.display = 'block';
-        mensajesDiv.innerHTML = carpetas[key].mensajes.map(
-          m => `<div class="mensaje">${m}</div>`
-        ).join('');
-        inputClave.value = '';
-      } else {
-        alert('Contraseña incorrecta');
-      }
-    }
-
-    function enviarMensaje(key) {
-      const input = document.getElementById(`msg-${key}`);
-      const texto = input.value.trim();
-      if (!texto) return;
-
-      carpetas[key].mensajes.push(texto);
-      input.value = '';
-
-      const mensajesDiv = document.getElementById(`mensajes-${key}`);
-      mensajesDiv.innerHTML += `<div class="mensaje">${texto}</div>`;
-
-      guardarEnLocalStorage();
-    }
-
-    function filtrarCarpetas() {
-      const filtro = document.getElementById('searchInput').value.toLowerCase();
-      const items = document.querySelectorAll('.carpeta-item');
-
-      items.forEach(item => {
-        const nombre = item.dataset.nombre;
-        item.style.display = nombre.includes(filtro) ? 'block' : 'none';
-      });
-    }
-
-    // Al cargar la página
-    cargarDesdeLocalStorage();
   </script>
 </body>
 </html>
