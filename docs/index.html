@@ -1,216 +1,139 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=3.0"/>
-  <title>Los Backyardigans están leyendo tu comentario.</title>
+  <meta charset="UTF-8">
+  <title>Los Backyardigans están leyendo tu comentario</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
     body {
+      background-color: #1e1e2f;
+      color: white;
+      font-family: Arial, sans-serif;
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #0d1117;
-      color: #c9d1d9;
+      padding: 0;
     }
     header {
-      background-color: #161b22;
-      padding: 1rem 2rem;
+      background-color: #2b2b3c;
+      padding: 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 1rem;
     }
-    header .header-left {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    header img.logo {
-      height: 60px;
-      border-radius: 8px;
-    }
-    h1 {
-      font-size: 1.2rem;
-      color: #58a6ff;
+    header h1 {
       margin: 0;
+      font-size: 1.5em;
     }
-    main {
-      padding: 2rem;
+    header img {
+      height: 60px;
     }
-    .carpeta {
-      background-color: #21262d;
-      padding: 1rem;
-      border-radius: 8px;
-      margin-bottom: 1rem;
+    .container {
+      padding: 20px;
     }
-    .carpeta h2 {
-      color: #58a6ff;
+    .comment-box {
+      margin-bottom: 20px;
     }
-    .carpeta p {
-      color: #8b949e;
-    }
-    input, button {
-      padding: 0.5rem;
-      margin: 0.5rem 0;
-      border: none;
-      border-radius: 4px;
-    }
-    input {
-      background-color: #0d1117;
-      color: #c9d1d9;
-      border: 1px solid #30363d;
-    }
-    button {
-      background-color: #238636;
+    .comment-box textarea {
+      width: 100%;
+      height: 80px;
+      padding: 10px;
+      background-color: #2b2b3c;
       color: white;
+      border: none;
+      border-radius: 5px;
+      resize: vertical;
+    }
+    .comment-box button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #3a3a5a;
+      color: white;
+      border: none;
+      border-radius: 5px;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #2ea043;
+    .comment {
+      background-color: #2b2b3c;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+      position: relative;
     }
-    .chat {
-      margin-top: 1rem;
-    }
-    .mensaje {
-      background-color: #30363d;
-      padding: 0.5rem;
-      border-radius: 4px;
-      margin: 0.5rem 0;
-    }
-    .search-container {
-      position: fixed;
-      top: 1rem;
-      right: 1rem;
-      background-color: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 25px;
-      padding: 0.3rem 0.8rem;
-      display: flex;
-      align-items: center;
-      z-index: 999;
-    }
-    .search-container input {
-      background: transparent;
+    .comment button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
       border: none;
-      outline: none;
-      color: #c9d1d9;
-      padding: 0.3rem;
-    }
-    .search-container svg {
-      width: 18px;
-      height: 18px;
-      fill: #58a6ff;
-      margin-left: 0.4rem;
+      color: #ff6666;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <!-- Buscador flotante -->
-  <div class="search-container">
-    <input type="text" placeholder="Buscar carpeta..." id="searchInput" onkeyup="filtrarCarpetas()" />
-    <svg viewBox="0 0 24 24">
-      <path d="M10 2a8 8 0 015.29 13.71l4.58 4.58-1.42 1.42-4.58-4.58A8 8 0 1110 2zm0 2a6 6 0 100 12 6 6 0 000-12z"/>
-    </svg>
+  <header>
+    <h1>Los Backyardigans están leyendo tu comentario.</h1>
+    <img src="https://m.media-amazon.com/images/S/pv-target-images/6b02fea9ac43358cad762d6d089a3684dc62bee64c72c5f99c5a690e99b5bb89._SX1080_FMjpg_.jpg" alt="Backyardigans">
+  </header>
+  <div class="container">
+    <div class="comment-box">
+      <textarea id="commentInput" placeholder="Escribe tu comentario..."></textarea>
+      <button onclick="submitComment()">Comentar</button>
+    </div>
+    <div id="commentsContainer"></div>
   </div>
 
-  <header>
-    <div class="header-left">
-      <img src="https://m.media-amazon.com/images/S/pv-target-images/6b02fea9ac43358cad762d6d089a3684dc62bee64c72c5f99c5a690e99b5bb89._SX1080_FMjpg_.jpg" alt="Logo Backyardigans" class="logo">
-      <h1>Los Backyardigans están leyendo tu comentario.</h1>
-    </div>
-  </header>
-
-  <main>
-    <section>
-      <h2>Crear nueva carpeta</h2>
-      <input type="text" id="carpetaNombre" placeholder="Nombre de la carpeta" />
-      <input type="password" id="carpetaClave" placeholder="Contraseña" />
-      <button onclick="crearCarpeta()">Crear Carpeta</button>
-    </section>
-
-    <section id="carpetas"></section>
-  </main>
-
   <script>
-    const carpetas = {};
+    const firebaseConfig = {
+      apiKey: "AIzaSyB4BiAjpsTUgntb0F7vcSEGwhJvhLFwxsQ",
+      authDomain: "xprojects-c8ecb.firebaseapp.com",
+      projectId: "xprojects-c8ecb",
+      storageBucket: "xprojects-c8ecb.appspot.com",
+      messagingSenderId: "28051514021",
+      appId: "1:28051514021:web:27af9723e8abebd38ca34c"
+    };
 
-    function crearCarpeta() {
-      const nombre = document.getElementById('carpetaNombre').value.trim();
-      const clave = document.getElementById('carpetaClave').value.trim();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-      if (!nombre || !clave) {
-        alert("Por favor, completa todos los campos.");
-        return;
+    function submitComment() {
+      const comment = document.getElementById('commentInput').value.trim();
+      if (comment) {
+        const commentId = db.ref().child('comments').push().key;
+        db.ref('comments/' + commentId).set({
+          text: comment,
+          timestamp: Date.now()
+        });
+        document.getElementById('commentInput').value = '';
       }
-
-      const nombreKey = nombre.toLowerCase();
-
-      if (carpetas[nombreKey]) {
-        alert("Ya existe una carpeta con ese nombre.");
-        return;
-      }
-
-      carpetas[nombreKey] = { nombreOriginal: nombre, clave, mensajes: [] };
-      mostrarCarpetas();
     }
 
-    function mostrarCarpetas() {
-      const contenedor = document.getElementById('carpetas');
-      contenedor.innerHTML = '';
-
-      Object.keys(carpetas).forEach(key => {
-        const nombreOriginal = carpetas[key].nombreOriginal;
-        const div = document.createElement('div');
-        div.className = 'carpeta carpeta-item';
-        div.dataset.nombre = key;
-        div.innerHTML = `
-          <h2>${nombreOriginal}</h2>
-          <input type="password" placeholder="Contraseña" id="pass-${key}" />
-          <button onclick="entrarCarpeta('${key}')">Entrar</button>
-          <div class="chat" id="chat-${key}" style="display:none;">
-            <input type="text" placeholder="Escribe un mensaje..." id="msg-${key}" />
-            <button onclick="enviarMensaje('${key}')">Enviar</button>
-            <div id="mensajes-${key}"></div>
-          </div>
-        `;
-        contenedor.appendChild(div);
+    function loadComments() {
+      db.ref('comments').on('value', snapshot => {
+        const container = document.getElementById('commentsContainer');
+        container.innerHTML = '';
+        const data = snapshot.val();
+        if (data) {
+          const sorted = Object.entries(data).sort((a, b) => b[1].timestamp - a[1].timestamp);
+          sorted.forEach(([id, comment]) => {
+            const div = document.createElement('div');
+            div.className = 'comment';
+            div.textContent = comment.text;
+            const btn = document.createElement('button');
+            btn.textContent = '🗑️';
+            btn.onclick = () => deleteComment(id);
+            div.appendChild(btn);
+            container.appendChild(div);
+          });
+        }
       });
     }
 
-    function entrarCarpeta(key) {
-      const inputClave = document.getElementById(`pass-${key}`);
-      const chat = document.getElementById(`chat-${key}`);
-      if (inputClave.value === carpetas[key].clave) {
-        chat.style.display = 'block';
-        inputClave.value = '';
-      } else {
-        alert('Contraseña incorrecta');
-      }
+    function deleteComment(id) {
+      db.ref('comments/' + id).remove();
     }
 
-    function enviarMensaje(key) {
-      const input = document.getElementById(`msg-${key}`);
-      const texto = input.value.trim();
-      if (!texto) return;
-
-      carpetas[key].mensajes.push(texto);
-      input.value = '';
-
-      const mensajesDiv = document.getElementById(`mensajes-${key}`);
-      mensajesDiv.innerHTML += `<div class="mensaje">${texto}</div>`;
-    }
-
-    function filtrarCarpetas() {
-      const filtro = document.getElementById('searchInput').value.toLowerCase();
-      const items = document.querySelectorAll('.carpeta-item');
-
-      items.forEach(item => {
-        const nombre = item.dataset.nombre;
-        item.style.display = nombre.includes(filtro) ? 'block' : 'none';
-      });
-    }
+    loadComments();
   </script>
 </body>
-</html>
-
 </html>
